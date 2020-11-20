@@ -43,13 +43,12 @@
 #ifdef TWOWIRESCHEDULER
 #include <IntTW.h>
 #include <ms5611TW.h>
-#include <vertaccel.h>
+#include <BiasCorrection.h>
 #include <LightInvensense.h>
 #include <TwoWireScheduler.h>
 #else
 #include <MS5611-Ext.h>
 #include <Wire.h>
-#include <vertaccel2.h>
 //#include <SparkFunMPU9250-DMP.h>
 #include <MPU9250-DMP_SF_EXT.h>
 #endif
@@ -74,7 +73,7 @@
 /*
 extern MS5611 ms5611;
 extern MPU9250_DMP imu;
-extern Vertaccel vertaccel;
+extern BiasCorrection biasCorrection;
 */
 
 

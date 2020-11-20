@@ -22,7 +22,7 @@
 #define ACCEL_CALIBRATOR_H
 
 #include <Arduino.h>
-#include <vertaccel.h>
+#include <BiasCorrection.h>
 
 #define ACCEL_CALIBRATOR_ORIENTATION_COUNT 6
 #define ACCEL_CALIBRATOR_ORIENTATION_THRESHOLD 0.7
@@ -110,7 +110,7 @@ class AccelCalibrator {
   
 
  private:
-  Vertaccel vertaccel;
+  BiasCorrection biasCorrection;
   void computeCenter(double* v1, double* v2, double* v3, double radius, double* center);
   double computeDistanceVariance(double *v, double* center);
 

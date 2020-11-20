@@ -60,7 +60,7 @@
 #endif
 
 #ifdef HAVE_ACCELEROMETER
-#include <vertaccel.h>
+#include <BiasCorrection.h>
 #endif
 
 /* clock settings */
@@ -115,7 +115,7 @@
 /* To use TWScheduler, init static variables :         */
 /*                                                     */
 /* Ms5611 TWScheduler::ms5611;                         */
-/* Vertaccel TWScheduler::vertaccel;                   */
+/* BiasCorrection TWScheduler::vertaccel;              */
 /* !!!                                             !!! */
 /*******************************************************/
 class TWScheduler {
@@ -129,7 +129,7 @@ class TWScheduler {
 #endif
   
 #ifdef HAVE_ACCELEROMETER
-  static Vertaccel vertaccel;
+  static BiasCorrection biasCorrection;
 #endif
 
   /* init both devices but not the TW bus */

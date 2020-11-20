@@ -46,7 +46,7 @@
 //#include "VarioDataTwoWireScheduler.h"
 #include <IntTW.h>
 #include <ms5611TW.h>
-#include <vertaccel.h>
+#include <BiasCorrection.h>
 #include <LightInvensense.h>
 #include <TwoWireScheduler.h>
 #include <sdcardHAL.h>

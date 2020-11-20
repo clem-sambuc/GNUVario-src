@@ -576,7 +576,7 @@ void VarioData::update(void)
       rawAccel[2] = imu.az;
 
       double tmpVertVector[3];
-      vertaccel.compute(rawAccel, quat, tmpVertVector, tmpAccel);
+      biasCorrection.compute(rawAccel, quat, tmpVertVector, tmpAccel);
 
       //      tmpAccel = 0;
     }

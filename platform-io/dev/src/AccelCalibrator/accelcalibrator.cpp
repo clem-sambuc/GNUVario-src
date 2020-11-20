@@ -20,7 +20,7 @@
 
 #include <accelcalibrator.h>
 #include <Arduino.h>
-#include <vertaccel.h>
+#include <BiasCorrection.h>
 
 AccelCalibrator::AccelCalibrator() {
 
@@ -34,14 +34,14 @@ AccelCalibrator::AccelCalibrator() {
 void AccelCalibrator::init(void) {
   
   /* init the accelerometer without calibration */
-  vertaccel.init();
+  biasCorrection.init();
 
   /* get the values stored in EEPROM */
-  VertaccelCalibration accelCal;
-  vertaccel.readAccelCalibration(accelCal);
+  BiasCorrectionCalibration accelCal;
+  biasCorrection.readAccelCalibration(accelCal);
 
   for(int i = 0; i<3; i++) {
-    calibration[i] = (double)accelCal.bias[i]/(double)(1 << VERTACCEL_ACCEL_CAL_BIAS_MULTIPLIER);
+    calibration[i] = (double)accelCal.bias[i]/(double)(1 << BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER);
   }
 }
 
@@ -61,7 +61,7 @@ void AccelCalibrator::measure(void) {
   /* empty the FIFO and stabilize the accelerometer */
   unsigned long currentTime = millis();
   while( millis() - currentTime < ACCEL_CALIBRATOR_WAIT_DURATION ) {
-    vertaccel.readRawAccel(iaccel, iquat);
+    biasCorrection.readRawAccel(iaccel, iquat);
   }
   
   /* starting measures with mean filter */
@@ -72,7 +72,7 @@ void AccelCalibrator::measure(void) {
   double accelSquareMean[3] = {0.0, 0.0, 0.0}; //to compute standard deviation
 
   while( count < ACCEL_CALIBRATOR_FILTER_SIZE ) {
-    if( vertaccel.readRawAccel(iaccel, iquat) ) {
+    if( biasCorrection.readRawAccel(iaccel, iquat) ) {
       measuredAccel[0] += (double)iaccel[0];
       measuredAccel[1] += (double)iaccel[1];
       measuredAccel[2] += (double)iaccel[2];
@@ -241,12 +241,12 @@ void AccelCalibrator::calibrate(void) {
     calibration[i] = calibrationCenter[i];
   }
   
-  VertaccelCalibration accelCal = {{ (int16_t)(calibrationCenter[0]*(double)(1 << VERTACCEL_ACCEL_CAL_BIAS_MULTIPLIER))
-				     ,(int16_t)(calibrationCenter[1]*(double)(1 << VERTACCEL_ACCEL_CAL_BIAS_MULTIPLIER))
-				     ,(int16_t)(calibrationCenter[2]*(double)(1 << VERTACCEL_ACCEL_CAL_BIAS_MULTIPLIER)) } , 0};
+  BiasCorrectionCalibration accelCal = {{ (int16_t)(calibrationCenter[0]*(double)(1 << BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER))
+				     ,(int16_t)(calibrationCenter[1]*(double)(1 << BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER))
+				     ,(int16_t)(calibrationCenter[2]*(double)(1 << BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER)) } , 0};
 
 
-  vertaccel.saveAccelCalibration(accelCal);
+  biasCorrection.saveAccelCalibration(accelCal);
   calibrated = true;
 }
 

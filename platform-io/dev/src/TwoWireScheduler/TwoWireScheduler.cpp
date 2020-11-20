@@ -52,7 +52,7 @@
 
 #ifdef HAVE_ACCELEROMETER
 #include <LightInvensense.h>
-#include <vertaccel.h>
+#include <BiasCorrection.h>
 #endif
 
 #include <DebugConfig.h>
@@ -508,10 +508,10 @@ double TWScheduler::getAccel(double* vertVector) {
   /* compute vertVector and vertAccel */
   double vertAccel;
   if( vertVector ) {
-    vertaccel.compute(rawAccel, quat, vertVector, vertAccel);
+    biasCorrection.compute(rawAccel, quat, vertVector, vertAccel);
   } else {
     double tmpVertVector[3];
-    vertaccel.compute(rawAccel, quat, tmpVertVector, vertAccel);
+    biasCorrection.compute(rawAccel, quat, tmpVertVector, vertAccel);
   }
 
   /* done */
@@ -599,10 +599,10 @@ void TWScheduler::getAccelGyro(double* vertVector, double* gyroVector) {
   /* compute vertVector and vertAccel */
   double vertAccel;
   if( vertVector ) {
-    vertaccel.compute(rawAccel, quat, vertVector, vertAccel);
+    biasCorrection.compute(rawAccel, quat, vertVector, vertAccel);
   } else {
     double tmpVertVector[3];
-    vertaccel.compute(rawAccel, quat, tmpVertVector, vertAccel);
+    biasCorrection.compute(rawAccel, quat, tmpVertVector, vertAccel);
   }
 
   int16_t rawGyro[3];
@@ -615,10 +615,10 @@ void TWScheduler::getAccelGyro(double* vertVector, double* gyroVector) {
   /* compute vertVector and vertAccel */
   double vertGyro;
   if( gyroVector ) {
-    vertaccel.computeGyro(rawGyro, quat, gyroVector, vertGyro);
+    biasCorrection.computeGyro(rawGyro, quat, gyroVector, vertGyro);
   } else {
     double tmpGyroVector[3];
-    vertaccel.computeGyro(rawGyro, quat, tmpGyroVector, vertGyro);
+    biasCorrection.computeGyro(rawGyro, quat, tmpGyroVector, vertGyro);
   }
 
   /* done */
@@ -696,7 +696,7 @@ void TWScheduler::getRawMag(int16_t* rawMag) {
     xSemaphoreGive(magMutex);
 
     /* parse mag data */
-#ifdef VERTACCEL_USE_MAG_SENS_ADJ    
+#ifdef BIAS_CORRECTION_USE_MAG_SENS_ADJ    
     if( fastMPUParseMag(magData, rawMag) >= 0 ) {
 #else
     if( fastMPUParseRawMag(magData, rawMag) >= 0 ) {
@@ -712,7 +712,7 @@ void TWScheduler::getNorthVector(double* vertVector, double* northVector) {
   getRawMag(rawMag);
 
   /* compute north vector */
-  vertaccel.computeNorthVector(vertVector, rawMag, northVector);
+  biasCorrection.computeNorthVector(vertVector, rawMag, northVector);
 }
 
 void TWScheduler::getNorthVector2(double* vertVector, double* gyroVector, double* northVector) {
@@ -726,7 +726,7 @@ void TWScheduler::getNorthVector2(double* vertVector, double* gyroVector, double
 	DUMP(rawMag[2]);
 
   /* compute north vector */
-  vertaccel.computeNorthVector2(vertVector, gyroVector, rawMag, northVector);
+  biasCorrection.computeNorthVector2(vertVector, gyroVector, rawMag, northVector);
 }
 
 #endif //AK89xx_SECONDARY
@@ -751,7 +751,7 @@ void TWScheduler::init(void) {
   xSemaphoreGive(ms5611Mutex);
 #endif
 #ifdef HAVE_ACCELEROMETER
-  vertaccel.init();
+  biasCorrection.init();
   imuMutex = xSemaphoreCreateBinary();
   xSemaphoreGive(imuMutex);
 #ifdef AK89xx_SECONDARY

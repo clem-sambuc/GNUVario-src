@@ -69,7 +69,7 @@ VarioImuStd::init()
     SerialPort.print("Oversampling: ");
     SerialPort.println(ms5611.getOversampling());
 
-    vertaccel.init();
+    biasCorrection.init();
 
 #ifdef HAVE_ACCELEROMETER
 #ifdef ACCEL_DEBUG
@@ -186,7 +186,7 @@ bool VarioImuTwoWire::updateData(void)
       rawAccel[2] = imu.az;
 
       double tmpVertVector[3];
-      vertaccel.compute(rawAccel, quat, tmpVertVector, Accel);
+      biasCorrection.compute(rawAccel, quat, tmpVertVector, Accel);
 			
 #ifdef DATA_DEBUG
 			SerialPort.print("Alti : ");

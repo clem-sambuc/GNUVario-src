@@ -48,7 +48,7 @@ Ms5611 TWScheduler::ms5611;
 #endif
 
 #ifdef HAVE_ACCELEROMETER
-Vertaccel TWScheduler::vertaccel;
+BiasCorrection TWScheduler::biasCorrection;
 #endif //HAVE_ACCELEROMETER
 
 
@@ -69,7 +69,7 @@ void VarioImuTwoWire::init()
 #ifdef HAVE_ACCELEROMETER
     intTW.begin();
     twScheduler.init();
-    //  vertaccel.init();
+    //  biasCorrection.init();
 
 #endif //HAVE_ACCELEROMETER
 }
