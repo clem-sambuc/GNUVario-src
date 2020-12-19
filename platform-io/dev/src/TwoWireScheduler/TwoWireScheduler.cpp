@@ -81,8 +81,6 @@
 #define bunset(bit) status &= ~(1 << bit)
 #define bisset(bit) (status & (1 << bit))
 
-TWScheduler twScheduler;
-
 /*********************/
 /* static class data */
 /*********************/

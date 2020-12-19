@@ -53,7 +53,7 @@
 #include <varioscreenGxEPD.h>
 #endif
 
-#include "VarioImuTwoWire.h"
+#include "VarioHardwareManager.h"
 
 #include "driver/rtc_io.h"
 
@@ -223,7 +223,7 @@ void deep_sleep(String Message) {
 	#endif
 	//	rtc_gpio_isolate(GPIO_NUM_12);
 
-	twScheduler.disableAcquisition();
+	varioHardwareManager.disableAcquisition();
 	
 	rtc_gpio_isolate(GPIO_BUTTON_A);
 	rtc_gpio_isolate(GPIO_BUTTON_C);

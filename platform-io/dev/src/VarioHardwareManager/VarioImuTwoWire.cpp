@@ -177,11 +177,46 @@ double VarioImuTwoWire::getTemp()
 }
 
 //**********************************
+bool VarioImuTwoWire::haveAccel()
+//**********************************
+{
+  return twScheduler.haveAccel();
+}
+
+//**********************************
+void VarioImuTwoWire::getRawAccelQuat(int16_t* accel, int32_t* quat)
+//**********************************
+{
+  twScheduler.getRawAccelQuat(accel, quat);
+}
+
+//**********************************
 void VarioImuTwoWire::getStableAccelQuat(double* stableAccel, double* quaternions)
 //**********************************
 {
   stableAccel = Accel;
   quaternions = Quat;
+}
+
+//**********************************
+bool VarioImuTwoWire::haveMag()
+//**********************************
+{
+  return twScheduler.haveMag();
+}
+
+//**********************************
+void VarioImuTwoWire::getRawMag(int16_t* mag)
+//**********************************
+{
+  twScheduler.getRawMag(mag);
+}
+
+//**********************************
+void VarioImuTwoWire::disableAcquisition()
+//**********************************
+{
+  twScheduler.disableAcquisition();
 }
 
 #endif // TWOWIRESCHEDULER

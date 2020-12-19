@@ -231,6 +231,4 @@ class TWScheduler {
   static void timerCallback(void);
 };
 
-extern TWScheduler twScheduler;
-
 #endif //TWO_WIRE_SCHEDULER_H

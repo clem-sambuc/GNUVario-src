@@ -56,9 +56,19 @@ public:
     void init();
     double firstAlti();
     bool updateData();
+
+    bool havePressure();
     double getAlti();
     double getTemp();
+
+    bool haveAccel();
+	void getRawAccelQuat(int16_t* accel, int32_t* quat);
     void getStableAccelQuat(double* stableAccel, double* quaternions);
+
+    bool haveMag();
+	void getRawMag(int16_t* mag);
+
+    void disableAcquisition();
 };
 
 #endif //VARIO_IMU_H

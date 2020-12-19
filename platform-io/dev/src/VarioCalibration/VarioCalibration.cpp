@@ -39,6 +39,7 @@
 #include <eepromHAL.h>
 
 #include <VarioSettings.h>
+#include <VarioHardwareManager.h>
 
 #ifdef TWOWIRESCHEDULER
 #include <IntTW.h>
@@ -144,8 +145,8 @@ void VarioCalibration::startMeasure(void) {
 uint8_t VarioCalibration::readRawAccelQuat(int16_t* accel, int32_t* quat) {
 /******************************************************/
 
-  if( twScheduler.haveAccel() ) {
-    twScheduler.getRawAccelQuat(accel, quat);
+  if( varioHardwareManager.haveAccel() ) {
+    varioHardwareManager.getRawAccelQuat(accel, quat);
     return 1;
   }
 
@@ -158,8 +159,8 @@ uint8_t VarioCalibration::readRawAccelQuat(int16_t* accel, int32_t* quat) {
 uint8_t VarioCalibration::readRawMag(int16_t* mag) {
 /*******************************/
 
-  if( twScheduler.haveMag() ) {
-    twScheduler.getRawMag(mag);
+  if( varioHardwareManager.haveMag() ) {
+    varioHardwareManager.getRawMag(mag);
     return 1;
   }
   

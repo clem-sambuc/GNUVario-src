@@ -54,7 +54,15 @@ public:
   void updateAlti();
   double getAlti();
   double getTemp();
+
+  bool haveAccel();
+	void getRawAccelQuat(int16_t* accel, int32_t* quat);
   void getStableAccelQuat(double* stableAccel, double* quaternions);
+
+  bool haveMag();
+	void getRawMag(int16_t* mag);
+
+  void disableAcquisition();
 
 private:
   double Alti;
@@ -62,6 +70,8 @@ private:
   double Accel[3];
   double Quat[4];
 	int	CompteurAccel = 0;
+
+  TWScheduler twScheduler;
 };
 
 #endif //TWOWIRESCHEDULER

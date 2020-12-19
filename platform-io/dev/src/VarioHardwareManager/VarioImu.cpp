@@ -48,7 +48,6 @@ VarioImu::VarioImu()
 
 //*******************************
 void VarioImu::init()
-//*******************************
 {
   this->imu->init();
 }
@@ -56,8 +55,6 @@ void VarioImu::init()
 //*******************************
 double VarioImu::firstAlti()
 {
-  //*******************************
-
   /******************/
   /* get first data */
   /******************/
@@ -110,27 +107,59 @@ double VarioImu::firstAlti()
 //*******************************
 bool VarioImu::updateData()
 {
-  //*******************************
   return (this->imu->updateData());
+}
+
+//*******************************
+bool VarioImu::havePressure()
+{
+  return this->imu->havePressure();
 }
 
 //*******************************
 double VarioImu::getAlti()
 {
-  //*******************************
   return this->imu->getAlti();
 }
 
 //*******************************
 double VarioImu::getTemp()
 {
-  //*******************************
   return this->imu->getTemp();
 }
 
 //*******************************
+
+bool VarioImu::haveAccel()
+{
+  return this->imu->haveAccel();
+}
+
+void VarioImu::getRawAccelQuat(int16_t* accel, int32_t* quat)
+{
+  this->imu->getRawAccelQuat(accel, quat);
+}
+
 void VarioImu::getStableAccelQuat(double* stableAccel, double* quaternions)
 {
-  //*******************************
   this->imu->getStableAccelQuat(stableAccel, quaternions);
+}
+
+//*******************************
+
+bool VarioImu::haveMag()
+{
+  return this->imu->haveMag();
+}
+
+void VarioImu::getRawMag(int16_t* mag)
+{
+  this->imu->getRawMag(mag);
+}
+
+//*******************************
+
+void VarioImu::disableAcquisition()
+{
+  this->imu->disableAcquisition();
 }

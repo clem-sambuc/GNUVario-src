@@ -290,4 +290,8 @@ void VarioImuStd::setAllToZero()
   Quat[3] = 0;
 }
 
+void disableAcquisition()
+{
+}
+
 #endif

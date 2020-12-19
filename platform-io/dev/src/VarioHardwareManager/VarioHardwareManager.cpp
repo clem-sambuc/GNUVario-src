@@ -143,6 +143,13 @@ bool VarioHardwareManager::initBt()
 }
 
 //**********************************
+bool VarioHardwareManager::havePressure()
+//**********************************
+{
+  return varioImu.havePressure();
+}
+
+//**********************************
 double VarioHardwareManager::getAlti()
 //**********************************
 {
@@ -157,10 +164,38 @@ double VarioHardwareManager::getTemp()
 }
 
 //**********************************
+bool VarioHardwareManager::haveAccel()
+//**********************************
+{
+  return varioImu.haveAccel();
+}
+
+//**********************************
+void VarioHardwareManager::getRawAccelQuat(int16_t* accel, int32_t* quat)
+//**********************************
+{
+  varioImu.getRawAccelQuat(accel, quat);
+}
+
+//**********************************
 void VarioHardwareManager::getStableAccelQuat(double* stableAccel, double* quaternions)
 //**********************************
 {
   varioImu.getStableAccelQuat(stableAccel, quaternions);
+}
+
+//**********************************
+bool VarioHardwareManager::haveMag()
+//**********************************
+{
+  return varioImu.haveMag();
+}
+
+//**********************************
+void VarioHardwareManager::getRawMag(int16_t* mag)
+//**********************************
+{
+  varioImu.getRawMag(mag);
 }
 
 //***********************************
@@ -197,6 +232,13 @@ void VarioHardwareManager::testInactivity(double velocity)
     MESSLOG(LOG_TYPE_DEBUG, DEEPSLEEP_DEBUG_LOG, "Deep sleep - inactivite");
     deep_sleep(varioLanguage.getText(TITRE_VEILLE)); //"En veille");
   }
+}
+
+//***********************************
+void VarioHardwareManager::disableAcquisition()
+//***********************************
+{
+  varioImu.disableAcquisition();
 }
 
 //***********************************

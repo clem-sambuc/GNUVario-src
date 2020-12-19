@@ -584,16 +584,17 @@ void VarioData::update(void)
 				double tmpAlti, tmpTemp, tmpAccel;
 
 				MESSLOG(LOG_TYPE_DEBUG,MS5611_DEBUG_LOG,"ERREUR MPU");
-				if ( twScheduler.havePressure() ) {
-					twScheduler.getTempAlti(tmpTemp, tmpAlti);
+				if ( varioHardwareManager.havePressure() ) {
+					tmpTemp = varioHardwareManager.getTemp();
+          tmpAlti = varioHardwareManager.getAlti();
 					DUMPLOG(LOG_TYPE_DEBUG,MS5611_DEBUG_LOG,tmpAlti);
 				} else {
 					MESSLOG(LOG_TYPE_DEBUG,MS5611_DEBUG_LOG,"AUCUNE MESURE MS5611");       
 				}
 				
-				if (twScheduler.haveAccel() ) {
+				if (varioHardwareManager.haveAccel() ) {
           double stableAccel[3];
-					twScheduler.getStableAccelQuat(stableAccel, NULL);
+					varioHardwareManager.getStableAccelQuat(stableAccel, NULL);
 					DUMPLOG(LOG_TYPE_DEBUG,MS5611_DEBUG_LOG,stableAccel[0]);
           DUMPLOG(LOG_TYPE_DEBUG,MS5611_DEBUG_LOG,stableAccel[1]);
           DUMPLOG(LOG_TYPE_DEBUG,MS5611_DEBUG_LOG,stableAccel[2]);
@@ -1267,9 +1268,9 @@ int VarioData::getCap(void) {
 		GpsAvalable = false;
 	}
 
-	if (twScheduler.haveAccel() ) {
+	if (varioHardwareManager.haveAccel() ) {
     double quat[4];
-    twScheduler.getStableAccelQuat(NULL, quat);
+    varioHardwareManager.getStableAccelQuat(NULL, quat);
     double vertVector[3];
     computeVerticalVector(quat, vertVector);
 		
@@ -1297,10 +1298,10 @@ int VarioData::getCap(void) {
     SerialPort.println(az);
 #endif //BEARING_DEBUG
 		
-		if (twScheduler.haveMag() ) {
+		if (varioHardwareManager.haveMag() ) {
 			int16_t magVector[3];
 			int tmpcap;
-			twScheduler.getRawMag(magVector);
+			varioHardwareManager.getRawMag(magVector);
 
 			// magnetometer calibration data 
 		//	float hxb, hxs, hyb, hys, hzb, hzs;

@@ -56,6 +56,8 @@ public:
     double 	getAlti();
     double 	getTemp();
     void 	  getStableAccelQuat(double* stableAccel, double* quaternions);
+
+    void disableAcquisition();
 		
 private:
   void setAllToZero();

@@ -78,11 +78,20 @@ public:
 	double firstAlti(void);
 	bool updateData(void);
 
+	bool havePressure();
 	double getAlti();
 	double getTemp();
+
+	bool haveAccel();
+	void getRawAccelQuat(int16_t* accel, int32_t* quat);
 	void getStableAccelQuat(double* stableAccel, double* quaternions);
 
+	bool haveMag();
+  void getRawMag(int16_t* rawMag);
+
 	void testInactivity(double velocity);
+
+	void disableAcquisition();
 
 	bool updateBluetooth(double velocity, double alti, double altiCalibrated);
 	bool updateGps(Kalmanvert kalmanvert);
