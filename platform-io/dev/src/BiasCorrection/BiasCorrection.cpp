@@ -182,36 +182,28 @@ void BiasCorrection::init(void) {
   fastMPUStart();
 }
 
-
-/* compute vertical vector and vertical accel from IMU data */
-void BiasCorrection::compute(int16_t *imuAccel, int32_t *imuQuat, double* vertVector, double& vertAccel) {
-
-  /*---------------------------------------*/
-  /*   vertical acceleration computation   */
-  /*---------------------------------------*/
-
-  /***************************/
-  /* normalize and calibrate */
-  /***************************/
-  double accel[3]; 
-  double quat[4];
+void BiasCorrection::stabilizeAccel(int16_t* imuAccel, double* stableAccel)
+{
+  /**************************************/
+  /* stabilize using static calibration */
+  /**************************************/
   
 #ifndef BIAS_CORRECTION_STATIC_CALIBRATION
   
   int64_t calibratedAccel = (int64_t)imuAccel[0] << GnuSettings.VARIO_BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER;
   calibratedAccel -= (int64_t)GnuSettings.VARIO_BIAS_CORRECTION_ACCEL_CAL_BIAS_00;
   calibratedAccel *= ((int64_t)GnuSettings.VARIO_BIAS_CORRECTION_ACCEL_CAL_SCALE + ((int64_t)1 << BIAS_CORRECTION_CAL_SCALE_MULTIPLIER));
-  accel[0] = ((double)calibratedAccel)/((double)((int64_t)1 << (GnuSettings.VARIO_BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_ACCEL_SCALE_SHIFT)));
+  stableAccel[0] = ((double)calibratedAccel)/((double)((int64_t)1 << (GnuSettings.VARIO_BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_ACCEL_SCALE_SHIFT)));
 
   calibratedAccel = (int64_t)imuAccel[1] << GnuSettings.VARIO_BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER;
   calibratedAccel -= (int64_t)GnuSettings.VARIO_BIAS_CORRECTION_ACCEL_CAL_BIAS_01;
   calibratedAccel *= ((int64_t)GnuSettings.VARIO_BIAS_CORRECTION_ACCEL_CAL_SCALE + ((int64_t)1 << BIAS_CORRECTION_CAL_SCALE_MULTIPLIER));
-  accel[1] = ((double)calibratedAccel)/((double)((int64_t)1 << (GnuSettings.VARIO_BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_ACCEL_SCALE_SHIFT)));
+  stableAccel[1] = ((double)calibratedAccel)/((double)((int64_t)1 << (GnuSettings.VARIO_BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_ACCEL_SCALE_SHIFT)));
 
   calibratedAccel = (int64_t)imuAccel[2] << GnuSettings.VARIO_BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER;
   calibratedAccel -= (int64_t)GnuSettings.VARIO_BIAS_CORRECTION_ACCEL_CAL_BIAS_02;
   calibratedAccel *= ((int64_t)GnuSettings.VARIO_BIAS_CORRECTION_ACCEL_CAL_SCALE + ((int64_t)1 << BIAS_CORRECTION_CAL_SCALE_MULTIPLIER));
-  accel[2] = ((double)calibratedAccel)/((double)((int64_t)1 << (GnuSettings.VARIO_BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_ACCEL_SCALE_SHIFT)));
+  stableAccel[2] = ((double)calibratedAccel)/((double)((int64_t)1 << (GnuSettings.VARIO_BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_ACCEL_SCALE_SHIFT)));
 
 #else
   /* inline for optimization */
@@ -219,70 +211,49 @@ void BiasCorrection::compute(int16_t *imuAccel, int32_t *imuQuat, double* vertVe
   calibratedAccel = (int64_t)imuAccel[0] << BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER;
   calibratedAccel -= (int64_t)settings.accelCal.bias[0];
   calibratedAccel *= ((int64_t)settings.accelCal.scale + ((int64_t)1 << BIAS_CORRECTION_CAL_SCALE_MULTIPLIER));
-  accel[0] = ((double)calibratedAccel)/((double)((int64_t)1 << (BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_ACCEL_SCALE_SHIFT)));
+  stableAccel[0] = ((double)calibratedAccel)/((double)((int64_t)1 << (BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_ACCEL_SCALE_SHIFT)));
 
   calibratedAccel = (int64_t)imuAccel[1] << BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER;
   calibratedAccel -= (int64_t)settings.accelCal.bias[1];
   calibratedAccel *= ((int64_t)settings.accelCal.scale + ((int64_t)1 << BIAS_CORRECTION_CAL_SCALE_MULTIPLIER));
-  accel[1] = ((double)calibratedAccel)/((double)((int64_t)1 << (BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_ACCEL_SCALE_SHIFT)));
+  stableAccel[1] = ((double)calibratedAccel)/((double)((int64_t)1 << (BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_ACCEL_SCALE_SHIFT)));
 
   calibratedAccel = (int64_t)imuAccel[2] << BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER;
   calibratedAccel -= (int64_t)settings.accelCal.bias[2];
   calibratedAccel *= ((int64_t)settings.accelCal.scale + ((int64_t)1 << BIAS_CORRECTION_CAL_SCALE_MULTIPLIER));
-  accel[2] = ((double)calibratedAccel)/((double)((int64_t)1 << (BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_ACCEL_SCALE_SHIFT)));
+  stableAccel[2] = ((double)calibratedAccel)/((double)((int64_t)1 << (BIAS_CORRECTION_ACCEL_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_ACCEL_SCALE_SHIFT)));
 #endif
-  
-  for(int i = 0; i<4; i++)
-    quat[i] = ((double)imuQuat[i])/LIGHT_INVENSENSE_QUAT_SCALE;
-  
-  
-  /******************************/
-  /* real and vert acceleration */
-  /******************************/
-  
-  /* compute vertical direction from quaternions */
-  vertVector[0] = 2*(quat[1]*quat[3]-quat[0]*quat[2]);
-  vertVector[1] = 2*(quat[2]*quat[3]+quat[0]*quat[1]);
-  vertVector[2] = 2*(quat[0]*quat[0]+quat[3]*quat[3])-1;
-  
-  /* compute real acceleration (without gravity) */
-  double ra[3];
-  for(int i = 0; i<3; i++) 
-    ra[i] = accel[i] - vertVector[i];
-  
-  /* compute vertical acceleration */
-  vertAccel = (vertVector[0]*ra[0] + vertVector[1]*ra[1] + vertVector[2]*ra[2]) * BIAS_CORRECTION_G_TO_MS;
 }
 
-/* compute vertical vector and vertical accel from IMU data */
-void BiasCorrection::computeGyro(int16_t *imuGyro, int32_t *imuQuat, double* gyroVector, double& vertGyro) {
+void BiasCorrection::scaleQuat(int32_t* imuQuat, double* scaledQuat)
+{
+  for(int i = 0; i<4; i++)
+    scaledQuat[i] = ((double)imuQuat[i])/LIGHT_INVENSENSE_QUAT_SCALE;
 }
 
 #ifdef AK89xx_SECONDARY
-void BiasCorrection::computeNorthVector(double* vertVector, int16_t* mag, double* northVector) {
-
-  /*-------------------------------*/
-  /*   north vector computation    */
-  /*-------------------------------*/
-  
-  double n[3];
+void BiasCorrection::stabilizeMag(int16_t* mag, double* stableMag)
+{
+  /**************************************/
+  /* stabilize using static calibration */
+  /**************************************/
 
 #ifndef BIAS_CORRECTION_STATIC_CALIBRATION
   int64_t calibratedMag;
   calibratedMag = ((int64_t)mag[0]) << GnuSettings.VARIO_BIAS_CORRECTION_MAG_CAL_BIAS_MULTIPLIER;
   calibratedMag -= (int64_t)GnuSettings.VARIO_BIAS_CORRECTION_MAG_CAL_BIAS_00;
   calibratedMag *= ((int64_t)GnuSettings.VARIO_BIAS_CORRECTION_MAG_CAL_PROJ_SCALE + ((int64_t)1 << BIAS_CORRECTION_CAL_SCALE_MULTIPLIER));
-  n[0] = ((double)calibratedMag)/((double)((int64_t)1 << (GnuSettings.VARIO_BIAS_CORRECTION_MAG_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_MAG_PROJ_SCALE_SHIFT)));
+  stableMag[0] = ((double)calibratedMag)/((double)((int64_t)1 << (GnuSettings.VARIO_BIAS_CORRECTION_MAG_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_MAG_PROJ_SCALE_SHIFT)));
 
   calibratedMag = ((int64_t)mag[1]) << GnuSettings.VARIO_BIAS_CORRECTION_MAG_CAL_BIAS_MULTIPLIER;
   calibratedMag -= (int64_t)GnuSettings.VARIO_BIAS_CORRECTION_MAG_CAL_BIAS_01;
   calibratedMag *= ((int64_t)GnuSettings.VARIO_BIAS_CORRECTION_MAG_CAL_PROJ_SCALE + ((int64_t)1 << BIAS_CORRECTION_CAL_SCALE_MULTIPLIER));
-  n[1] = ((double)calibratedMag)/((double)((int64_t)1 << (GnuSettings.VARIO_BIAS_CORRECTION_MAG_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_MAG_PROJ_SCALE_SHIFT)));
+  stableMag[1] = ((double)calibratedMag)/((double)((int64_t)1 << (GnuSettings.VARIO_BIAS_CORRECTION_MAG_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_MAG_PROJ_SCALE_SHIFT)));
 
   calibratedMag = ((int64_t)mag[2]) << GnuSettings.VARIO_BIAS_CORRECTION_MAG_CAL_BIAS_MULTIPLIER;
   calibratedMag -= (int64_t)GnuSettings.VARIO_BIAS_CORRECTION_MAG_CAL_BIAS_02;
   calibratedMag *= ((int64_t)GnuSettings.VARIO_BIAS_CORRECTION_MAG_CAL_PROJ_SCALE + ((int64_t)1 << BIAS_CORRECTION_CAL_SCALE_MULTIPLIER));
-  n[2] = ((double)calibratedMag)/((double)((int64_t)1 << (GnuSettings.VARIO_BIAS_CORRECTION_MAG_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_MAG_PROJ_SCALE_SHIFT)));
+  stableMag[2] = ((double)calibratedMag)/((double)((int64_t)1 << (GnuSettings.VARIO_BIAS_CORRECTION_MAG_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_MAG_PROJ_SCALE_SHIFT)));
   
 #else
   /* inline for optimization */
@@ -290,26 +261,21 @@ void BiasCorrection::computeNorthVector(double* vertVector, int16_t* mag, double
   calibratedMag = ((int64_t)mag[0]) << BIAS_CORRECTION_MAG_CAL_BIAS_MULTIPLIER;
   calibratedMag -= (int64_t)settings.magCal.bias[0];
   calibratedMag *= ((int64_t)settings.magCal.scale + ((int64_t)1 << BIAS_CORRECTION_CAL_SCALE_MULTIPLIER));
-  n[0] = ((double)calibratedMag)/((double)((int64_t)1 << (BIAS_CORRECTION_MAG_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_MAG_PROJ_SCALE_SHIFT)));
+  stableMag[0] = ((double)calibratedMag)/((double)((int64_t)1 << (BIAS_CORRECTION_MAG_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_MAG_PROJ_SCALE_SHIFT)));
 
   calibratedMag = ((int64_t)mag[1]) << BIAS_CORRECTION_MAG_CAL_BIAS_MULTIPLIER;
   calibratedMag -= (int64_t)settings.magCal.bias[1];
   calibratedMag *= ((int64_t)settings.magCal.scale + ((int64_t)1 << BIAS_CORRECTION_CAL_SCALE_MULTIPLIER));
-  n[1] = ((double)calibratedMag)/((double)((int64_t)1 << (BIAS_CORRECTION_MAG_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_MAG_PROJ_SCALE_SHIFT)));
+  stableMag[1] = ((double)calibratedMag)/((double)((int64_t)1 << (BIAS_CORRECTION_MAG_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_MAG_PROJ_SCALE_SHIFT)));
 
   calibratedMag = ((int64_t)mag[2]) << BIAS_CORRECTION_MAG_CAL_BIAS_MULTIPLIER;
   calibratedMag -= (int64_t)settings.magCal.bias[2];
   calibratedMag *= ((int64_t)settings.magCal.scale + ((int64_t)1 << BIAS_CORRECTION_CAL_SCALE_MULTIPLIER));
-  n[2] = ((double)calibratedMag)/((double)((int64_t)1 << (BIAS_CORRECTION_MAG_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_MAG_PROJ_SCALE_SHIFT)));
+  stableMag[2] = ((double)calibratedMag)/((double)((int64_t)1 << (BIAS_CORRECTION_MAG_CAL_BIAS_MULTIPLIER + BIAS_CORRECTION_CAL_SCALE_MULTIPLIER + LIGHT_INVENSENSE_MAG_PROJ_SCALE_SHIFT)));
 #endif
-        
-  /* compute north vector by applying rotation from v to z to vector n */
-  vertVector[2] = -1.0 - vertVector[2];
-  northVector[0] = (1+vertVector[0]*vertVector[0]/vertVector[2])*n[0] + (vertVector[0]*vertVector[1]/vertVector[2])*n[1] - vertVector[0]*n[2];
-  northVector[1] = (vertVector[0]*vertVector[1]/vertVector[2])*n[0] + (1+vertVector[1]*vertVector[1]/vertVector[2])*n[1] - vertVector[1]*n[2];
 }
 
-void BiasCorrection::computeNorthVector2(double* vertVector, double* gyroVector, int16_t* mag, double* northVector) {
+void BiasCorrection::computeNorthVector(double* vertVector, int16_t* mag, double* northVector) {
 
   /*-------------------------------*/
   /*   north vector computation    */
@@ -363,43 +329,43 @@ void BiasCorrection::computeNorthVector2(double* vertVector, double* gyroVector,
 
 
 /* direct access to sensors */
-uint8_t BiasCorrection::readRawAccel(int16_t* accel, int32_t* quat) {
+boolean BiasCorrection::readRawAccelQuat(int16_t* accel, int32_t* quat) {
 
-  uint8_t haveValue = 0;
+  boolean haveValue = false;
 
   while( fastMPUReadFIFO(NULL, accel, quat) >= 0 ) {
-    haveValue = 1;
+    haveValue = true;
   }
 
   return haveValue;
 }
 
-uint8_t BiasCorrection::readRawGyro(int16_t* gyro, int32_t* quat) {
+boolean BiasCorrection::readRawGyroQuat(int16_t* gyro, int32_t* quat) {
 
-  uint8_t haveValue = 0;
+  boolean haveValue = false;
 
   while( fastMPUReadFIFO(gyro, NULL, quat) >= 0 ) {
-    haveValue = 1;
+    haveValue = true;
   }
 
   return haveValue;
 }
 
-uint8_t BiasCorrection::readRawSensor(int16_t* gyro, int16_t* accel, int32_t* quat) {
+boolean BiasCorrection::readRawSensor(int16_t* gyro, int16_t* accel, int32_t* quat) {
 
-  uint8_t haveValue = 0;
+  boolean haveValue = false;
 
   while( fastMPUReadFIFO(gyro, accel, quat) >= 0 ) {
-    haveValue = 1;
+    haveValue = true;
   }
 
   return haveValue;
 }
   
 #ifdef AK89xx_SECONDARY
-uint8_t BiasCorrection::readRawMag(int16_t* mag) {
+boolean BiasCorrection::readRawMag(int16_t* mag) {
 
-  uint8_t haveValue = 0;
+  boolean haveValue = false;
 
   if( fastMPUMagReady() ) {
 #ifdef BIAS_CORRECTION_USE_MAG_SENS_ADJ
@@ -407,7 +373,7 @@ uint8_t BiasCorrection::readRawMag(int16_t* mag) {
 #else
     fastMPUReadRawMag(mag);
 #endif //BIAS_CORRECTION_USE_MAG_SENS_ADJ
-    haveValue = 1;
+    haveValue = true;
   }
 
   return haveValue;

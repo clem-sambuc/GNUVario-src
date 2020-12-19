@@ -54,12 +54,13 @@ public:
   void updateAlti();
   double getAlti();
   double getTemp();
-  double getAccel();
+  void getStableAccelQuat(double* stableAccel, double* quaternions);
 
 private:
   double Alti;
   double Temp;
-  double Accel;
+  double Accel[3];
+  double Quat[4];
 	int	CompteurAccel = 0;
 };
 

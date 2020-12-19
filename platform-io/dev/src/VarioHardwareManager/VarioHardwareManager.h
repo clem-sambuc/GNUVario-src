@@ -80,7 +80,7 @@ public:
 
 	double getAlti();
 	double getTemp();
-	double getAccel();
+	void getStableAccelQuat(double* stableAccel, double* quaternions);
 
 	void testInactivity(double velocity);
 

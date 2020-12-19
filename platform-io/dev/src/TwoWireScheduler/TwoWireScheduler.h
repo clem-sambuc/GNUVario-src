@@ -148,22 +148,24 @@ class TWScheduler {
   static bool haveAccel(void);
   static bool haveNewAccel(void);
   static bool resetNewAccel(void);
-  static void getRawAccel(int16_t* rawAccel, int32_t* quat);
-  static double getAccel(double* vertVector); //vertVector = NULL if not needed
+  static void getRawAccelQuat(int16_t* rawAccel, int32_t* quat);
+  static void getStableAccelQuat(double* stableAccel, double* scaledQuat); // stableAccel or scaledQuat can be NULL if not needed
 	
+  /*-------------------------------------------------------*/
+  // useless methods as long as we can access the quaternions
+  /*-------------------------------------------------------*/
   static bool haveGyro(void);
   static bool haveNewGyro(void);
   static bool resetNewGyro(void);
-	static void getRawGyro(int16_t* rawGyro, int32_t* quat);
-	
-	static void getRawAccelGyro(int16_t* rawAccel, int16_t* rawGyro, int32_t* quat);
-	static void getAccelGyro(double* vertVector, double* gyroVector);
+	static void getRawGyroQuat(int16_t* rawGyro, int32_t* quat);
+	static void getRawAccelGyroQuat(int16_t* rawAccel, int16_t* rawGyro, int32_t* quat);
+  /*-------------------------------------------------------*/
 
 #ifdef AK89xx_SECONDARY
   static bool haveMag(void);
   static void getRawMag(int16_t* rawMag);
-  static void getNorthVector(double* vertVector, double* northVector); //give the vertVector obtained previously
-  static void getNorthVector2(double* vertVector, double* gyroVector, double* northVector); //give the vertVector and gyroVector obtained previously
+  static void getStableMag(double* stableMag); // stableMag can be NULL if not needed
+  //static void getNorthVector(double* vertVector, double* northVector); //give the vertVector obtained previously
 #endif //AK89xx_SECONDARY
 #endif //HAVE_ACCELEROMETER
   

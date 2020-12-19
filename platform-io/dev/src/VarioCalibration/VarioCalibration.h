@@ -130,7 +130,7 @@ private:
 #endif //SDCARD_OUTPUT
 	
 	void startMeasure(void);
-	uint8_t readRawAccel(int16_t* accel, int32_t* quat);
+	uint8_t readRawAccelQuat(int16_t* accel, int32_t* quat);
 
 #ifdef AK89xx_SECONDARY
 /*******************************/

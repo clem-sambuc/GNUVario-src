@@ -69,8 +69,6 @@ void VarioImuTwoWire::init()
 #ifdef HAVE_ACCELEROMETER
     intTW.begin();
     twScheduler.init();
-    //  biasCorrection.init();
-
 #endif //HAVE_ACCELEROMETER
 }
 
@@ -93,7 +91,7 @@ bool VarioImuTwoWire::updateData(void)
 		twScheduler.resetNewAccel();
     twScheduler.getTempAlti(Temp, Alti);
     Temp += GnuSettings.COMPENSATION_TEMP; //MPU_COMP_TEMP;
-    Accel = twScheduler.getAccel(NULL);
+    twScheduler.getStableAccelQuat(Accel, Quat);
 		
 #ifdef DATA_DEBUG
     SerialPort.print("VarioImuTwoWire Update");
@@ -102,7 +100,9 @@ bool VarioImuTwoWire::updateData(void)
     SerialPort.print("Temperature : ");
     SerialPort.println(Temp);
     SerialPort.print("Accel : ");
-    SerialPort.println(Accel);
+    SerialPort.println(Accel[0]);
+    SerialPort.println(Accel[1]);
+    SerialPort.println(Accel[2]);
 #endif //DATA_DEBUG
 				
 		return true;
@@ -129,7 +129,13 @@ bool VarioImuTwoWire::updateData(void)
 
     twScheduler.getTempAlti(Temp, Alti);
     Temp += GnuSettings.COMPENSATION_TEMP; //MPU_COMP_TEMP;
-		Accel = 0;
+		Accel[0] = 0;
+    Accel[1] = 0;
+    Accel[2] = 0;
+    Quat[0] = 0;
+    Quat[1] = 0;
+    Quat[2] = 0;
+    Quat[3] = 0;
 		
 #ifdef DATA_DEBUG
     SerialPort.print("Alti : ");
@@ -137,26 +143,14 @@ bool VarioImuTwoWire::updateData(void)
     SerialPort.print("Temperature : ");
     SerialPort.println(Temp);
     SerialPort.print("Accel : ");
-    SerialPort.println(Accel);
+    SerialPort.println(Accel[0]);
+    SerialPort.println(Accel[1]);
+    SerialPort.println(Accel[2]);
 #endif //DATA_DEBUG
 		
 		return true;
 	}
 #endif
-
-/*  Temp = 0;
-	Alti = 0;
-	Accel =0;
-	
-#ifdef DATA_DEBUG
-	SerialPort.println("ERREUR ACQUISITION MS5611/MPU");
-	SerialPort.print("Alti : ");
-	SerialPort.println(Alti);
-	SerialPort.print("Temperature : ");
-	SerialPort.println(Temp);
-	SerialPort.print("Accel : ");
-	SerialPort.println(Accel);
-#endif //DATA_DEBUG*/
 	
 	return false;
 }
@@ -172,21 +166,22 @@ void VarioImuTwoWire::updateAlti()
 double VarioImuTwoWire::getAlti()
 //**********************************
 {
-  return Alti; //twScheduler.getAlti();
+  return Alti;
 }
 
 //**********************************
 double VarioImuTwoWire::getTemp()
 //**********************************
 {
-  return Temp; //twScheduler.getAlti();
+  return Temp;
 }
 
 //**********************************
-double VarioImuTwoWire::getAccel()
+void VarioImuTwoWire::getStableAccelQuat(double* stableAccel, double* quaternions)
 //**********************************
 {
-  return Accel; //twScheduler.getAlti();
+  stableAccel = Accel;
+  quaternions = Quat;
 }
 
 #endif // TWOWIRESCHEDULER

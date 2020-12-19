@@ -50,7 +50,6 @@ private:
 #else
     VarioImuStd *imu;
 #endif
-    Kalmanvert kalmanVert;
 
 public:
     VarioImu();
@@ -59,7 +58,7 @@ public:
     bool updateData();
     double getAlti();
     double getTemp();
-    double getAccel();
+    void getStableAccelQuat(double* stableAccel, double* quaternions);
 };
 
 #endif //VARIO_IMU_H

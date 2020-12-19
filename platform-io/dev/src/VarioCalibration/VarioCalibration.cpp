@@ -141,11 +141,11 @@ void VarioCalibration::startMeasure(void) {
 }
 
 /******************************************************/
-uint8_t VarioCalibration::readRawAccel(int16_t* accel, int32_t* quat) {
+uint8_t VarioCalibration::readRawAccelQuat(int16_t* accel, int32_t* quat) {
 /******************************************************/
 
   if( twScheduler.haveAccel() ) {
-    twScheduler.getRawAccel(accel, quat);
+    twScheduler.getRawAccelQuat(accel, quat);
     return 1;
   }
 
@@ -174,7 +174,7 @@ void VarioCalibration::makeMeasureStep(void) {
   /* accel */
   int16_t accel[3];
   int32_t quat[4];
-  if( readRawAccel(accel, quat) ) {
+  if( readRawAccelQuat(accel, quat) ) {
 
 #ifdef IMU_DEBUG
     SerialPort.println("makeMeasureStep : readRawAccel OK");

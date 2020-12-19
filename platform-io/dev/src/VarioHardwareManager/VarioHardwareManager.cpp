@@ -157,10 +157,10 @@ double VarioHardwareManager::getTemp()
 }
 
 //**********************************
-double VarioHardwareManager::getAccel()
+void VarioHardwareManager::getStableAccelQuat(double* stableAccel, double* quaternions)
 //**********************************
 {
-  return varioImu.getAccel();
+  varioImu.getStableAccelQuat(stableAccel, quaternions);
 }
 
 //***********************************

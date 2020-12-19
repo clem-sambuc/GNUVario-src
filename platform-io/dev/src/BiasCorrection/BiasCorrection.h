@@ -36,9 +36,6 @@
 //to know about the magnetometer 
 #include <LightInvensense.h>
 
-/* G to ms convertion */
-#define BIAS_CORRECTION_G_TO_MS 9.80665
-
 /* use mag sensitivity adjustement */
 #define BIAS_CORRECTION_USE_MAG_SENS_ADJ
 
@@ -167,20 +164,23 @@ class BiasCorrection{
   void init(void);
 
   /* access to sensors */
-  static uint8_t readRawAccel(int16_t* accel, int32_t* quat);
-	static uint8_t readRawGyro(int16_t* gyro, int32_t* quat);
-	static uint8_t readRawSensor(int16_t* gyro, int16_t* accel, int32_t* quat);
+  static boolean readRawAccelQuat(int16_t* accel, int32_t* quat);
+	static boolean readRawGyroQuat(int16_t* gyro, int32_t* quat);
+	static boolean readRawSensor(int16_t* gyro, int16_t* accel, int32_t* quat);
 
 #ifdef AK89xx_SECONDARY
-  static uint8_t readRawMag(int16_t* mag);
+  static boolean readRawMag(int16_t* mag);
 #endif //AK89xx_SECONDARY
 
-  /* compute measures */
-  void compute(int16_t *imuAccel, int32_t *imuQuat, double* vertVector, double& vertAccel);
-  void computeGyro(int16_t *imuGyro, int32_t *imuQuat, double* gyroVector, double& vertGyro);
+  /* compute bias correction values*/
+  void stabilizeAccel(int16_t* imuAccel, double* stableAccel);
+	void scaleQuat(int32_t* imuQuat, double* scaledQuat);
+
 #ifdef AK89xx_SECONDARY
+  /* compute bias correction values*/
+  void stabilizeMag(int16_t* mag, double* stableMag);
+  
   void computeNorthVector(double* vertVector, int16_t* mag, double* northVector);
-  void computeNorthVector2(double* vertVector, double* gyroVector, int16_t* mag, double* northVector);
 #endif
   
   /* calibration class methods */

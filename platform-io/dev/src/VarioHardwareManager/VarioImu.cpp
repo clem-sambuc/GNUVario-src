@@ -129,8 +129,8 @@ double VarioImu::getTemp()
 }
 
 //*******************************
-double VarioImu::getAccel()
+void VarioImu::getStableAccelQuat(double* stableAccel, double* quaternions)
 {
   //*******************************
-  return this->imu->getAccel();
+  this->imu->getStableAccelQuat(stableAccel, quaternions);
 }

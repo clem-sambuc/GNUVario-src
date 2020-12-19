@@ -61,7 +61,7 @@ void AccelCalibrator::measure(void) {
   /* empty the FIFO and stabilize the accelerometer */
   unsigned long currentTime = millis();
   while( millis() - currentTime < ACCEL_CALIBRATOR_WAIT_DURATION ) {
-    biasCorrection.readRawAccel(iaccel, iquat);
+    biasCorrection.readRawAccelQuat(iaccel, iquat);
   }
   
   /* starting measures with mean filter */
@@ -72,7 +72,7 @@ void AccelCalibrator::measure(void) {
   double accelSquareMean[3] = {0.0, 0.0, 0.0}; //to compute standard deviation
 
   while( count < ACCEL_CALIBRATOR_FILTER_SIZE ) {
-    if( biasCorrection.readRawAccel(iaccel, iquat) ) {
+    if( biasCorrection.readRawAccelQuat(iaccel, iquat) ) {
       measuredAccel[0] += (double)iaccel[0];
       measuredAccel[1] += (double)iaccel[1];
       measuredAccel[2] += (double)iaccel[2];

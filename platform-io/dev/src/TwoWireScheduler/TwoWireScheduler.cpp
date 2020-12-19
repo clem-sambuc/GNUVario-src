@@ -470,7 +470,7 @@ bool TWScheduler::resetNewAccel(void) {
   return bunset(HAVE_NEWACCEL);
 }
 
-void TWScheduler::getRawAccel(int16_t* rawAccel, int32_t* quat) {
+void TWScheduler::getRawAccelQuat(int16_t* rawAccel, int32_t* quat) {
   
   /***************/
   /* check accel */
@@ -493,29 +493,27 @@ void TWScheduler::getRawAccel(int16_t* rawAccel, int32_t* quat) {
   /* check tap : use callback if needed */
   fastMPUCheckTap(tap);
 }
-  
 
-double TWScheduler::getAccel(double* vertVector) {
-
-  /*****************/
-  /* get raw accel */
-  /*****************/
+void TWScheduler::getStableAccelQuat(double* stableAccel, double* scaledQuat)
+{
+  /*********************************/
+  /* get raw accel and quaternions */
+  /*********************************/
   int16_t rawAccel[3];
   int32_t quat[4];
-  
-  getRawAccel(rawAccel, quat);
-  
-  /* compute vertVector and vertAccel */
-  double vertAccel;
-  if( vertVector ) {
-    biasCorrection.compute(rawAccel, quat, vertVector, vertAccel);
-  } else {
-    double tmpVertVector[3];
-    biasCorrection.compute(rawAccel, quat, tmpVertVector, vertAccel);
-  }
+  getRawAccelQuat(rawAccel, quat);
 
-  /* done */
-  return vertAccel;
+  /*********************************/
+  /* correct accel and quaternions */
+  /*********************************/
+  if (stableAccel)
+  {
+    biasCorrection.stabilizeAccel(rawAccel, stableAccel);
+  }
+  if (scaledQuat)
+  {
+    biasCorrection.scaleQuat(quat, scaledQuat);
+  }
 }
 
 bool TWScheduler::haveGyro(void) {
@@ -533,7 +531,7 @@ bool TWScheduler::resetNewGyro(void) {
   return bunset(HAVE_NEWGYRO);
 }
 
-void TWScheduler::getRawGyro(int16_t* rawGyro, int32_t* quat) {
+void TWScheduler::getRawGyroQuat(int16_t* rawGyro, int32_t* quat) {
   
   /***************/
   /* check gyro */
@@ -557,7 +555,7 @@ void TWScheduler::getRawGyro(int16_t* rawGyro, int32_t* quat) {
   fastMPUCheckTap(tap);
 }
 
-void TWScheduler::getRawAccelGyro(int16_t* rawAccel, int16_t* rawGyro, int32_t* quat) {
+void TWScheduler::getRawAccelGyroQuat(int16_t* rawAccel, int16_t* rawGyro, int32_t* quat) {
   
   /***************/
   /* check accel */
@@ -579,50 +577,6 @@ void TWScheduler::getRawAccelGyro(int16_t* rawAccel, int16_t* rawGyro, int32_t* 
 
   /* check tap : use callback if needed */
   fastMPUCheckTap(tap);
-}
-  
-
-void TWScheduler::getAccelGyro(double* vertVector, double* gyroVector) {
-
-  /*****************/
-  /* get raw accel */
-  /*****************/
-  int16_t rawAccel[3];
-  int32_t quat[4];
-  
-  getRawAccel(rawAccel, quat);
-	
-	DUMP(rawAccel[0]);
-	DUMP(rawAccel[1]);
-	DUMP(rawAccel[2]);
-  
-  /* compute vertVector and vertAccel */
-  double vertAccel;
-  if( vertVector ) {
-    biasCorrection.compute(rawAccel, quat, vertVector, vertAccel);
-  } else {
-    double tmpVertVector[3];
-    biasCorrection.compute(rawAccel, quat, tmpVertVector, vertAccel);
-  }
-
-  int16_t rawGyro[3];
-  getRawGyro(rawGyro, quat);
-
-	DUMP(rawGyro[0]);
-	DUMP(rawGyro[1]);
-	DUMP(rawGyro[2]);
-  
-  /* compute vertVector and vertAccel */
-  double vertGyro;
-  if( gyroVector ) {
-    biasCorrection.computeGyro(rawGyro, quat, gyroVector, vertGyro);
-  } else {
-    double tmpGyroVector[3];
-    biasCorrection.computeGyro(rawGyro, quat, tmpGyroVector, vertGyro);
-  }
-
-  /* done */
-//  return vertAccel;
 }
 
 #ifdef AK89xx_SECONDARY
@@ -705,29 +659,32 @@ void TWScheduler::getRawMag(int16_t* rawMag) {
   }
 }
 
-void TWScheduler::getNorthVector(double* vertVector, double* northVector) {
-
+void TWScheduler::getStableMag(double* stableMag)
+{
+  /***************/
   /* get raw mag */
+  /***************/
   int16_t rawMag[3];
   getRawMag(rawMag);
 
-  /* compute north vector */
-  biasCorrection.computeNorthVector(vertVector, rawMag, northVector);
+  /***************/
+  /* correct mag */
+  /***************/
+  if (stableMag)
+  {
+    biasCorrection.stabilizeMag(rawMag, stableMag);
+  }
 }
 
-void TWScheduler::getNorthVector2(double* vertVector, double* gyroVector, double* northVector) {
+// void TWScheduler::getNorthVector(double* vertVector, double* northVector) {
 
-  /* get raw mag */
-  int16_t rawMag[3];
-  getRawMag(rawMag);
+//   /* get raw mag */
+//   int16_t rawMag[3];
+//   getRawMag(rawMag);
 
-	DUMP(rawMag[0]);
-	DUMP(rawMag[1]);
-	DUMP(rawMag[2]);
-
-  /* compute north vector */
-  biasCorrection.computeNorthVector2(vertVector, gyroVector, rawMag, northVector);
-}
+//   /* compute north vector */
+//   biasCorrection.computeNorthVector(vertVector, rawMag, northVector);
+// }
 
 #endif //AK89xx_SECONDARY
 #endif //HAVE_ACCELEROMETER

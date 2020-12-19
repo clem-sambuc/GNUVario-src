@@ -161,9 +161,6 @@ bool VarioImuTwoWire::updateData(void)
 	
   if (imu.fifoAvailable())
   {
-    int16_t rawAccel[3];
-    int32_t quat[4];
-
     long realPressure = ms5611.readPressure();
     Alti = ms5611.getAltitude(realPressure);
     Temp = ms5611.readTemperature();
@@ -172,21 +169,19 @@ bool VarioImuTwoWire::updateData(void)
     // Use dmpUpdateFifo to update the ax, gx, mx, etc. values
     if (imu.dmpUpdateFifo() == INV_SUCCESS)
     {
-      // computeEulerAngles can be used -- after updating the
-      // quaternion values -- to estimate roll, pitch, and yaw
-      //      imu.computeEulerAngles();
-
-      quat[0] = imu.qw;
-      quat[1] = imu.qx;
-      quat[2] = imu.qy;
-      quat[3] = imu.qz;
-
+      int16_t rawAccel[3];
       rawAccel[0] = imu.ax;
       rawAccel[1] = imu.ay;
       rawAccel[2] = imu.az;
+      
+      int32_t imuQuat[4];
+      imuQuat[0] = imu.qw;
+      imuQuat[1] = imu.qx;
+      imuQuat[2] = imu.qy;
+      imuQuat[3] = imu.qz;
 
-      double tmpVertVector[3];
-      biasCorrection.compute(rawAccel, quat, tmpVertVector, Accel);
+      biasCorrection.stabilizeAccel(rawAccel, Accel);
+      biasCorrection.scaleQuat(imuQuat, Quat);
 			
 #ifdef DATA_DEBUG
 			SerialPort.print("Alti : ");
@@ -194,17 +189,16 @@ bool VarioImuTwoWire::updateData(void)
 			SerialPort.print("Temperature : ");
 			SerialPort.println(Temp);
 			SerialPort.print("Accel : ");
-			SerialPort.println(Accel);
+			SerialPort.println(Accel[0]);
+      SerialPort.println(Accel[1]);
+      SerialPort.println(Accel[2]);
 #endif //DATA_DEBUG
 
 			return true;
     }
 		else //(imu.dmpUpdateFifo() == INV_SUCCESS)
 		{
-			Alti  = 0;
-			Temp  = 0;
-			Accel = 0;			
-			
+			setAllToZero();
 #ifdef DATA_DEBUG
 			SerialPort.println("ERREUR ACQUISITION MS5611/MPU");
 			SerialPort.print("Alti : ");
@@ -212,7 +206,9 @@ bool VarioImuTwoWire::updateData(void)
 			SerialPort.print("Temperature : ");
 			SerialPort.println(Temp);
 			SerialPort.print("Accel : ");
-			SerialPort.println(Accel);
+			SerialPort.println(Accel[0]);
+      SerialPort.println(Accel[1]);
+      SerialPort.println(Accel[2]);
 #endif //DATA_DEBUG
 	
 			return false;			
@@ -220,9 +216,7 @@ bool VarioImuTwoWire::updateData(void)
 	}
 	else 
 	{
-		Alti  = 0;
-		Temp  = 0;
-		Accel = 0;
+		setAllToZero();
 #ifdef DATA_DEBUG
 		SerialPort.println("ERREUR ACQUISITION MS5611/MPU");
 		SerialPort.print("Alti : ");
@@ -237,6 +231,7 @@ bool VarioImuTwoWire::updateData(void)
 	}
 #else //HAVE_ACCELEROMETER
 
+  setAllToZero();
   long realPressure = ms5611.readPressure();
   //    DUMPLOG(LOG_TYPE_DEBUG,MS5611_DEBUG_LOG,realPressure);
   Alti = ms5611.getAltitude(realPressure);
@@ -245,7 +240,6 @@ bool VarioImuTwoWire::updateData(void)
   //   DUMPLOG(LOG_TYPE_DEBUG,MS5611_DEBUG_LOG,tmpTemp);
   Temp += GnuSettings.COMPENSATION_TEMP; //MPU_COMP_TEMP;
   //    DUMPLOG(LOG_TYPE_DEBUG,MS5611_DEBUG_LOG,tmpTemp);
-	Accel = 0;
 
 #ifdef DATA_DEBUG
     SerialPort.print("Alti : ");
@@ -277,9 +271,23 @@ double VarioImuStd::getTemp(){
   return Temp;
 }
 //**********************************
-double VarioImuStd::getAccel(){
+void VarioImuStd::getStableAccelQuat(double* stableAccel, double* quaternions){
 //**********************************
-  return Accel;
+  stableAccel = Accel;
+  quaternions = Quat;
+}
+
+void VarioImuStd::setAllToZero()
+{
+  Alti  = 0;
+  Temp  = 0;
+  Accel[0] = 0;
+  Accel[1] = 0;
+  Accel[2] = 0;
+  Quat[0] = 0;
+  Quat[1] = 0;
+  Quat[2] = 0;
+  Quat[3] = 0;
 }
 
 #endif

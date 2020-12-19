@@ -416,15 +416,20 @@ void VarioData::update(void)
 
 		alti						= varioHardwareManager.getAlti();
 		temperature			= varioHardwareManager.getTemp();
-		accel						= varioHardwareManager.getAccel();
-		
+    
+    // get stable acceleration vector and project it onto vertical direction
+    double accel[3];
+    double quat[4];
+    varioHardwareManager.getStableAccelQuat(accel, quat);
+    vertAccel = computeVerticalAccel(accel, quat);
+
 #ifdef DATA_DEBUG
     SerialPort.println("Kalman Update");
 #endif //PROG_DEBUG
 
-		kalmanvert.update(alti, accel, millis());
+		kalmanvert.update(alti, vertAccel, millis());
 		
-		velocity 				= kalmanvert.getVelocity();
+		vertVelocity 		= kalmanvert.getVelocity();
 		calibratedAlti 	= kalmanvert.getCalibratedPosition();
 
 #ifdef DATA_DEBUG
@@ -433,10 +438,10 @@ void VarioData::update(void)
     SerialPort.println(alti);
     SerialPort.print("Temperature : ");
     SerialPort.println(temperature);
-    SerialPort.print("Accel : ");
-    SerialPort.println(accel);
-    SerialPort.print("Velocity : ");
-    SerialPort.println(velocity);
+    SerialPort.print("Vertical Accel : ");
+    SerialPort.println(vertAccel);
+    SerialPort.print("Vertical Velocity : ");
+    SerialPort.println(vertVelocity);
     SerialPort.print("Calibrated alti : ");
     SerialPort.println(calibratedAlti);
 #endif //DATA_DEBUG
@@ -446,7 +451,7 @@ void VarioData::update(void)
     //**********************************************************
 
 /*#ifdef HAVE_SPEAKER
-    beeper.setVelocity(velocity);
+    beeper.setVelocity(vertVelocity);
 #endif //HAVE_SPEAKER*/
 
 
@@ -467,11 +472,11 @@ void VarioData::update(void)
     SerialPort.print("Temperature : ");
     SerialPort.println(temperature);
     SerialPort.print("accelerateur : ");
-    SerialPort.println(accel);
+    SerialPort.println(vertAccel);
     SerialPort.print("Kalman Alti : ");
     SerialPort.println(calibratedAlti);
     SerialPort.print("Kalman Vario : ");
-    SerialPort.println(velocity);
+    SerialPort.println(vertVelocity);
 #endif //DATA_DEBUG
 
     /* set screen */
@@ -481,7 +486,7 @@ void VarioData::update(void)
     //**********************************************************
 
     flystat.SetAlti(calibratedAlti);
-    flystat.SetVario(velocity);
+    flystat.SetVario(vertVelocity);
 		
     if (displayLowUpdateState)
     {
@@ -535,251 +540,6 @@ void VarioData::update(void)
 		 haveNewClimbRateDataBuzzer = false;
 		 climbRateBuzzer	= 0;
 		}
-/*
-#ifdef HAVE_ACCELEROMETER
-#ifdef TWOWIRESCHEDULER
-  if (twScheduler.havePressure() && twScheduler.haveAccel())
-  {
-
-    compteurErrorMPU = 0;
-    double tmpAlti, tmpTemp, tmpAccel;
-    twScheduler.getTempAlti(tmpTemp, tmpAlti);
-    tmpAccel = twScheduler.getAccel(NULL);
-#else //TWOWIRESCHEDULER
-
-  if (imu.fifoAvailable())
-  {
-
-    double tmpAlti, tmpTemp, tmpAccel;
-    int16_t rawAccel[3];
-    int32_t quat[4];
-
-    long realPressure = ms5611.readPressure();
-    tmpAlti = ms5611.getAltitude(realPressure);
-    tmpTemp = ms5611.readTemperature();
-    tmpTemp += GnuSettings.COMPENSATION_TEMP; //MPU_COMP_TEMP;
-
-    // Use dmpUpdateFifo to update the ax, gx, mx, etc. values
-    if (imu.dmpUpdateFifo() == INV_SUCCESS)
-    {
-      // computeEulerAngles can be used -- after updating the
-      // quaternion values -- to estimate roll, pitch, and yaw
-      //      imu.computeEulerAngles();
-
-      quat[0] = imu.qw;
-      quat[1] = imu.qx;
-      quat[2] = imu.qy;
-      quat[3] = imu.qz;
-
-      rawAccel[0] = imu.ax;
-      rawAccel[1] = imu.ay;
-      rawAccel[2] = imu.az;
-
-      double tmpVertVector[3];
-      biasCorrection.compute(rawAccel, quat, tmpVertVector, tmpAccel);
-
-      //      tmpAccel = 0;
-    }
-
-#endif //TWOWIRESCHEDULER
-
-#ifdef DATA_DEBUG
-    SerialPort.print("Alti : ");
-    SerialPort.println(tmpAlti);
-    SerialPort.print("Temperature : ");
-    SerialPort.println(tmpTemp);
-    SerialPort.print("Accel : ");
-    SerialPort.println(tmpAccel);
-#endif //DATA_DEBUG
-
-    varioData.kalmanvert.update(tmpAlti,
-                      tmpAccel,
-                      millis());
-#else //HAVE_ACCELEROMETER
-
-
-
-#ifdef TWOWIRESCHEDULER
-  if (twScheduler.havePressure())
-  {
-
-#ifdef MS5611_DEBUG
-//    SerialPort.println("havePressure");
-#endif //MS5611_DEBUG
-
-    double tmpAlti, tmpTemp;
-    twScheduler.getTempAlti(tmpTemp, tmpAlti);
-#else  //TWOWIRESCHEDULER
-  double tmpAlti, tmpTemp, tmpAccel;
-
-  long realPressure = ms5611.readPressure();
-  //    DUMPLOG(LOG_TYPE_DEBUG,MS5611_DEBUG_LOG,realPressure);
-  tmpAlti = ms5611.getAltitude(realPressure);
-  //    DUMPLOG(LOG_TYPE_DEBUG,MS5611_DEBUG_LOG,tmpAlti);
-  tmpTemp = ms5611.readTemperature();
-  //   DUMPLOG(LOG_TYPE_DEBUG,MS5611_DEBUG_LOG,tmpTemp);
-  tmpTemp += MPU_COMP_TEMP;
-  //    DUMPLOG(LOG_TYPE_DEBUG,MS5611_DEBUG_LOG,tmpTemp);
-
-#endif //TWOWIRESCHEDULER
-
-#ifdef DATA_DEBUG
-    SerialPort.print("Alti : ");
-    SerialPort.println(tmpAlti);
-    SerialPort.print("Temperature : ");
-    SerialPort.println(tmpTemp);
-#endif //DATA_DEBUG
-
-    varioData.kalmanvert.update(tmpAlti,
-                      0.0,
-                      millis());
-#endif //HAVE_ACCELEROMETER
-
-#ifdef PROG_DEBUG
-    //SerialPort.println("Kalman Update");
-#endif //PROG_DEBUG
-	} */
-	
-	/*
-    // **********************************************************
-    //  TEST INNACTIVITE
-    // **********************************************************
-
-    if (abs(varioData.kalmanvert.getVelocity()) > GnuSettings.SLEEP_THRESHOLD_CPS)
-    {
-      // reset sleep timeout watchdog if there is significant vertical motion
-      varioHardwareManager.sleepTimeoutSecs = millis();
-    }
-    else if ((GnuSettings.SLEEP_THRESHOLD_CPS != 0) && ((millis() - varioHardwareManager.sleepTimeoutSecs) >= (GnuSettings.SLEEP_TIMEOUT_MINUTES * 60 * 1000)))
-    {
-#ifdef MAIN_DEBUG
-      SerialPort.println("Timed out with no significant climb/sink, put MPU9250 and ESP8266 to sleep to minimize current draw");
-      SerialPort.flush();
-#endif
-      indicatePowerDown();
-      //     TRACELOG(LOG_TYPE_DEBUG, DEEPSLEEP_DEBUG_LOG);
-      MESSLOG(LOG_TYPE_DEBUG, DEEPSLEEP_DEBUG_LOG, "Deep sleep - inactivite");
-      deep_sleep("Power off");
-    }
-
-    // **********************************************************
-    //  TRAITEMENT DES DONNEES
-    // **********************************************************
-
-    // * set history *
-#if defined(HAVE_GPS)
-    if ((GnuSettings.VARIOMETER_DISPLAY_INTEGRATED_CLIMB_RATE) || (GnuSettings.RATIO_CLIMB_RATE > 1))
-      varioData.history.setAlti(varioData.kalmanvert.getCalibratedPosition(), millis());
-#endif
-
-    double currentalti = varioData.kalmanvert.getCalibratedPosition();
-    double currentvario = varioData.kalmanvert.getVelocity();
-    //    DUMPLOG(LOG_TYPE_DEBUG,KALMAN_DEBUG_LOG,currentalti);
-    //    DUMPLOG(LOG_TYPE_DEBUG,KALMAN_DEBUG_LOG,currentvario);
-
-#ifdef DATA_DEBUG
-    SerialPort.print("Kalman Alti : ");
-    SerialPort.println(currentalti);
-    SerialPort.print("Kalman Vario : ");
-    SerialPort.println(currentvario);
-#endif //DATA_DEBUG
-
-    // set screen *
-
-    // **********************************************************
-    //  MAJ STATISTIQUE
-    // **********************************************************
-
-    varioData.flystat.SetAlti(currentalti);
-    varioData.flystat.SetVario(currentvario);
-
-#ifdef HAVE_SCREEN
-
-    // **********************************************************
-    //  DISPLAY ALTI
-    // **********************************************************
-
-#ifdef DATA_DEBUG
-    //   SerialPort.print("altitude : ");
-    //   SerialPort.println(currentalti);
-#endif //DATA_DEBUG
-
-    if (varioData.displayLowUpdateState)
-    {
-      screen.altiDigit->setValue(currentalti);
-#ifdef AGL_MANAGER_H
-      varioData.aglManager.setAlti(currentalti);
-#endif
-    }
-
-    // **********************************************************
-    //  DISPLAY VARIO
-    // **********************************************************
-
-    if (GnuSettings.VARIOMETER_DISPLAY_INTEGRATED_CLIMB_RATE)
-    {
-      if (varioData.history.haveNewClimbRate())
-      {
-        if (varioData.displayLowUpdateState)
-          screen.varioDigit->setValue(varioData.history.getClimbRate(GnuSettings.SETTINGS_CLIMB_PERIOD_COUNT));
-      }
-    }
-    else
-    {
-      if (varioData.displayLowUpdateState)
-        screen.varioDigit->setValue(currentvario);
-    }
-
-    // **********************************************************
-    //  DISPLAY FINESSE / TAUX DE CHUTE MOYEN
-    // **********************************************************
-
-    if (varioData.history.haveNewClimbRate())
-    {
-      double TmpTrend;
-      TmpTrend = varioData.history.getClimbRate(GnuSettings.SETTINGS_CLIMB_PERIOD_COUNT);
-#ifdef DATA_DEBUG
-      SerialPort.print("Trend value : ");
-      SerialPort.println(TmpTrend);
-#endif //DATA_DEBUG
-
-      if (varioData.displayLowUpdateState)
-      {
-        if (GnuSettings.RATIO_CLIMB_RATE > 1)
-        {
-          if (abs(TmpTrend) < 10)
-            screen.trendDigit->setValue(abs(TmpTrend));
-          else
-            screen.trendDigit->setValue(9.9);
-        }
-
-#ifdef DATA_DEBUG
-        SerialPort.println("display trendLevel");
-#endif //DATA_DEBUG
-
-        if (TmpTrend == 0)
-          screen.trendLevel->stateTREND(0);
-        else if (TmpTrend > 0)
-          screen.trendLevel->stateTREND(1);
-        else
-          screen.trendLevel->stateTREND(-1);
-      }
-    }
-#else
-    if (GnuSettings.VARIOMETER_DISPLAY_INTEGRATED_CLIMB_RATE)
-    {
-      if (history.haveNewClimbRate())
-      {
-        if (displayLowUpdateState)
-          screen.varioDigit->setValue(history.getClimbRate(GnuSettings.SETTINGS_CLIMB_PERIOD_COUNT));
-      }
-      else
-      {
-        if (displayLowUpdateState)
-          screen.varioDigit->setValue(currentvario);
-      }
-#endif //HAVE_SCREEN*/
-
 
 #ifdef HAVE_SPEAKER
 		updateBeeper();
@@ -807,8 +567,8 @@ void VarioData::update(void)
 
 			alti						= 0;
 			temperature			= 0;
-			accel						= 0;
-			velocity 				= 0;
+			vertAccel						= 0;
+			vertVelocity 				= 0;
 			calibratedAlti 	= 0;
 			haveNewClimbRateData = false;
 			climbRate		 		= 0;
@@ -832,8 +592,11 @@ void VarioData::update(void)
 				}
 				
 				if (twScheduler.haveAccel() ) {
-					tmpAccel = twScheduler.getAccel(NULL);
-					DUMPLOG(LOG_TYPE_DEBUG,MS5611_DEBUG_LOG,tmpAccel);
+          double stableAccel[3];
+					twScheduler.getStableAccelQuat(stableAccel, NULL);
+					DUMPLOG(LOG_TYPE_DEBUG,MS5611_DEBUG_LOG,stableAccel[0]);
+          DUMPLOG(LOG_TYPE_DEBUG,MS5611_DEBUG_LOG,stableAccel[1]);
+          DUMPLOG(LOG_TYPE_DEBUG,MS5611_DEBUG_LOG,stableAccel[2]);
 				} else {
 					MESSLOG(LOG_TYPE_DEBUG,MS5611_DEBUG_LOG,"AUCUNE MESURE MPU");               
 				}
@@ -853,7 +616,7 @@ void VarioData::updateBeeper(void)
 	}
 	else
 	{
-		beeper.setVelocity(velocity);
+		beeper.setVelocity(vertVelocity);
 	}
 }	
 
@@ -861,7 +624,7 @@ void VarioData::updateBeeper(void)
 double VarioData::getVelocity()
 //*******************************************
 {
-	double tmpvalue = velocity;
+	double tmpvalue = vertVelocity;
 	if (tmpvalue > MAX_VELOCITY)
     tmpvalue = MAX_VELOCITY;
   if (tmpvalue < -MAX_VELOCITY)
@@ -1454,6 +1217,28 @@ void VarioData::updateVoltage(void) {
 #endif //HAVE_VOLTAGE_DIVISOR
 }
 
+void VarioData::computeVerticalVector(double* scaledQuat, double* vertVector)
+{
+  /* compute vertical direction from quaternions */
+  vertVector[0] = 2*(scaledQuat[1]*scaledQuat[3]-scaledQuat[0]*scaledQuat[2]);
+  vertVector[1] = 2*(scaledQuat[2]*scaledQuat[3]+scaledQuat[0]*scaledQuat[1]);
+  vertVector[2] = 2*(scaledQuat[0]*scaledQuat[0]+scaledQuat[3]*scaledQuat[3])-1;
+}
+
+double VarioData::computeVerticalAccel(double* accelVector, double* scaledQuat)
+{
+  double vertVector[3];
+  computeVerticalVector(scaledQuat, vertVector);
+  
+  /* compute real acceleration (without gravity) */
+  double ra[3];
+  for(int i = 0; i<3; i++) 
+    ra[i] = accelVector[i] - vertVector[i];
+  
+  /* project real acceleration to vertical direction and scale in m/s2 */
+  return (vertVector[0]*ra[0] + vertVector[1]*ra[1] + vertVector[2]*ra[2]) * G_TO_MS;
+}
+
 /*******************************************/
 int VarioData::getCap(void) {
 /*******************************************/
@@ -1483,8 +1268,10 @@ int VarioData::getCap(void) {
 	}
 
 	if (twScheduler.haveAccel() ) {
-		double vertVector[3];
-		double vertAccel = twScheduler.getAccel(vertVector);
+    double quat[4];
+    twScheduler.getStableAccelQuat(NULL, quat);
+    double vertVector[3];
+    computeVerticalVector(quat, vertVector);
 		
 /*  NEW */
 
@@ -1509,85 +1296,8 @@ int VarioData::getCap(void) {
     SerialPort.print("az : ");
     SerialPort.println(az);
 #endif //BEARING_DEBUG
-
-/*
-
-  static void getRawAccel(int16_t* rawAccel, int32_t* quat);
-  static double getAccel(double* vertVector); //vertVector = NULL if not needed
-  static void getRawMag(int16_t* rawMag);
-
-
-/ accelerometer and magnetometer data 
-float a, ax, ay, az, h, hx, hy, hz;
-// magnetometer calibration data 
-float hxb, hxs, hyb, hys, hzb, hzs;
-// euler angles 
-float pitch_rad, roll_rad, yaw_rad, heading_rad;
-// filtered heading 
-float filtered_heading_rad;
-
-    ax = imu.getAccelX_mss();
-    ay = imu.getAccelY_mss();
-    az = imu.getAccelZ_mss();
-    hx = imu.getMagX_uT();
-    hy = imu.getMagY_uT();
-    hz = imu.getMagZ_uT();
-    // Normalize accelerometer and magnetometer data 
-    a = sqrtf(ax * ax + ay * ay + az * az);
-    ax /= a;
-    ay /= a;
-    az /= a;
-
-    h = sqrtf(hx * hx + hy * hy + hz * hz);
-    hx /= h;
-    hy /= h;
-    hz /= h;
-    // Compute euler angles 
-    pitch_rad = asinf(ax);
-    roll_rad = asinf(-ay / cosf(pitch_rad));
-    yaw_rad = atan2f(hz * sinf(roll_rad) - hy * cosf(roll_rad), hx * cosf(pitch_rad) + hy * sinf(pitch_rad) * sinf(roll_rad) + hz * sinf(pitch_rad) * cosf(roll_rad));
-    heading_rad = constrainAngle360(yaw_rad);
-    // Filtering heading 
-    filtered_heading_rad = (filtered_heading_rad * (window_size - 1.0f) + heading_rad) / window_size;
-    // Display the results 
-    Serial.print(pitch_rad * R2D);
-    Serial.print("\t");
-    Serial.print(roll_rad * R2D);
-    Serial.print("\t");
-    Serial.print(yaw_rad * R2D);
-    Serial.print("\t");
-    Serial.print(heading_rad * R2D);
-    Serial.print("\t");
-    Serial.println(filtered_heading_rad * R2D);
-  }
-}
-
-// Bound angle between 0 and 360 
-float constrainAngle360(float dta) {
-  dta = fmod(dta, 2.0 * PI);
-  if (dta < 0.0)
-    dta += 2.0 * PI;
-  return dta;
-}
-*/		
 		
 		if (twScheduler.haveMag() ) {
-/*			double northVector[2];
-			twScheduler.getNorthVector(vertVector,  northVector);
-			 
-			double norm = sqrt(northVector[0]*northVector[0]+northVector[1]*northVector[1]);
-			northVector[0] = northVector[0]/norm;
-			northVector[1] = northVector[1]/norm;
-			
-			DUMP(northVector[0]);
-			DUMP(northVector[1]);
-			
-			int tmpcap = 180 - atan2(northVector[1],northVector[0]) * 180/M_PI;
-			
-//			tmpcap = 360 - tmpcap;
-			
-			DUMP(tmpcap);*/
-			
 			int16_t magVector[3];
 			int tmpcap;
 			twScheduler.getRawMag(magVector);

@@ -85,6 +85,8 @@
 #define STATE_PAGE_CALIBRATION 8
 #define STATE_PAGE_CALIBRATE 9
 
+/* G to ms convertion */
+#define G_TO_MS 9.80665
 class VarioData
 {
 public:
@@ -160,6 +162,11 @@ public:
 		FlightHistory<50, 40> buzzerHistory;
 
 private:
+		// internal functions to be moved into VarioProcessData
+		void computeVerticalVector(double* scaledQuat, double* vertVector);
+		double computeVerticalAccel(double* accelVector, double* scaledQuat);
+
+private:
 		unsigned long compteurErrorMPU = 0;
 		int compteurBoucle = 0;
 
@@ -171,11 +178,11 @@ private:
 		uint8_t Beta_Code;
 		String  Devname;
     double 	firstAlti; 
-		double 	velocity;				//KalmanVario
+		double 	vertVelocity;	  //KalmanVario
 		double 	alti;						//Alti baro
 		double 	calibratedAlti;	//KalmanAlti
 		double 	temperature;
-		double 	accel;
+		double 	vertAccel;
 		double 	climbRate;
 		bool   	haveNewClimbRateData = false;
 		double 	trend;
