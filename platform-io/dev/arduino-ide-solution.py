@@ -10,7 +10,10 @@ def parseConfigFile(config_file):
   libs_paths = config['env:esp32dev']['build_flags'].replace('-I./', '').split('\n')
   libs_infos = []
   for lib in libs_paths:
-    lib_name = filter(len, ['' if (val=="src" or val=="lib") else val for val in lib.split('/')])
+    lib_name = []
+    for val in lib.split('/'):
+      if (val != '' and val != "src" and val != "lib"):
+        lib_name.append(val)
     if (len(lib_name) == 1):
       libs_infos.append([lib, lib_name[0]])
   print("\tdone\n")
